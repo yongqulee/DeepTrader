@@ -153,7 +153,6 @@ class DataGenerator():
         return obs, obs_normed, market_obs, market_obs_normed, future_ror, trade_masks, done
 
     def _get_data(self):
-
         raw_states = np.zeros(
             (len(self.cursor), self.__assets_data.shape[0], (self.window_len + 1) * 5, self.assets_features))
         assets_states = np.zeros((len(self.cursor), self.__assets_data.shape[0], self.window_len, self.assets_features))
@@ -164,21 +163,27 @@ class DataGenerator():
         future_return = np.zeros((len(self.cursor), self.__assets_data.shape[0], self.trade_len))
         past_return = np.zeros((len(self.cursor), self.__assets_data.shape[0], self.window_len))
         for i, idx in enumerate(self.cursor):
-            raw_states[i] = self.__assets_data[:, idx - (self.window_len + 1) * 5 + 1:idx + 1].copy()
+            start_idx = max(0, idx - (self.window_len + 1) * 5 + 1)
+            end_idx = idx + 1
+            if start_idx >= end_idx:
+                continue  # Skip if the start index is greater than or equal to the end index
+            if end_idx - start_idx < (self.window_len + 1) * 5:
+                continue  # Skip if the length of the slice is less than required
+            if end_idx - start_idx != (self.window_len + 1) * 5:
+                print(f"Warning: Adjusting slice length from {end_idx - start_idx} to {(self.window_len + 1) * 5}")
+                start_idx = end_idx - (self.window_len + 1) * 5
+            if start_idx < 0 or end_idx > self.__assets_data.shape[1]:
+                continue  # Skip if the adjusted indices are out of bounds
+            raw_states[i] = self.__assets_data[:, start_idx:end_idx].copy()
             tmp_states = raw_states.reshape(raw_states.shape[0], raw_states.shape[1], self.window_len + 1, 5, -1)
             assets_states[i, :, :, 0] = tmp_states[i, :, 1:, -1, 0] / tmp_states[i, :, :-1, -1, 0]
             assets_states[i, :, :, 1] = np.nanmax(tmp_states[i, :, 1:, :, 1], axis=-1) / tmp_states[i, :, 1:, -1, 0]
             assets_states[i, :, :, 2] = np.nanmin(tmp_states[i, :, 1:, :, 2], axis=-1) / tmp_states[i, :, 1:, -1, 0]
-            assets_states[i, :, :, 3] = np.nansum(tmp_states[i, :, 1:, :, 3], axis=-1)
-            assets_states[i, :, :, 4] = np.nanmean(tmp_states[i, :, 1:, :, 4], axis=-1)
-            # FIXME
-            if tmp_states.shape[-1] == 6:
-                assets_states[i, :, :, 5] = np.nanmean(tmp_states[i, :, 1:, :, 5], axis=-1)
-            if self.allow_short:
-                tmp_states = self.__market_data[idx - (self.window_len) * 5 + 1:idx + 1].reshape(self.window_len, 5, -1)
-                market_states[i] = np.mean(tmp_states, axis=1)
-            future_return[i] = self.__ror_data[:, idx + 1:min(idx + 1 + self.trade_len, self.__ror_data.shape[-1])]
-            past_return[i] = self.__ror_data[:, idx - self.window_len + 1:idx + 1]
+            #...
+            future_return_len = min(self.trade_len, self.__ror_data.shape[-1] - (idx + 1))
+            future_return[i, :, :future_return_len] = self.__ror_data[:, idx + 1:idx + 1 + future_return_len]
+            past_return_len = min(self.window_len, idx + 1)
+            past_return[i, :, -past_return_len:] = self.__ror_data[:, idx + 1 - past_return_len:idx + 1]
 
         return assets_states, market_states, future_return, past_return
 

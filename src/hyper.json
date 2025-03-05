@@ -12,15 +12,12 @@
     "tau": 0.001,
     "batch_size": 37,
     "use_gpu": true,
-    "addaptiveadj":true,
+    "addaptiveadj": true,
     "trade_mode": "M",
     "fee": 0.001,
     "theta": 0.15,
     "sigma": 0.5,
-    "in_features": [
-        6,
-        4
-    ],
+    "in_features": [6, 4],
     "num_assets": 30,
     "G": 4,
     "mode": "train",
@@ -33,5 +30,10 @@
     "market": "DJIA",
     "device": "cuda",
     "relation_file": "industry_classification.npy",
-    "trade_len": 21
+    "trade_len": 21,
+    "config": "hyper.json",
+    "seed": -1,
+    "spatial_bool": true,
+    "msu_bool": true,
+    "addaptive_adj_bool": true
 }

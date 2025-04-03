@@ -22,7 +22,7 @@ def run(func_args):
     data_prefix = './data/' + func_args.market + '/'
     matrix_path = data_prefix + func_args.relation_file
 
-    start_time = datetime.now().strftime('%m%d/%H:%M:%S')
+    start_time = datetime.now().strftime('%m%d_%H%M%S')
     if func_args.mode == 'train':
         PREFIX = 'outputs/'
         PREFIX = os.path.join(PREFIX, start_time)
